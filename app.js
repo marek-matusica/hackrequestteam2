@@ -17,6 +17,7 @@ app.message('hello', async ({ message, say }) => {
 });
 
 
+
 // Handle /hlasovanie command
 app.command('/hlasovanie', async ({ command, ack, respond }) => {
   await ack();
@@ -43,7 +44,7 @@ app.command('/hlasovanie', async ({ command, ack, respond }) => {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: 'Prosím ohodnoťte svoj level spokojnosti (1-10):'
+            text: 'Aká je pravdepodobnosť, že by si kolegovi odporučil vybraný projekt? 👍🏼/👎🏼( 0 nízka - 10 vysoká )'
           }
         },
         {
@@ -56,7 +57,7 @@ app.command('/hlasovanie', async ({ command, ack, respond }) => {
                 {
                   text: {
                     type: 'plain_text',
-                    text: '1 - Veľmi nespokojný',
+                    text: '1',
                     emoji: true
                   },
                   value: '1'
@@ -88,7 +89,7 @@ app.command('/hlasovanie', async ({ command, ack, respond }) => {
                 {
                   text: {
                     type: 'plain_text',
-                    text: '5 - Neutrálny',
+                    text: '5',
                     emoji: true
                   },
                   value: '5'
@@ -128,7 +129,7 @@ app.command('/hlasovanie', async ({ command, ack, respond }) => {
                 {
                   text: {
                     type: 'plain_text',
-                    text: '10 - Veľmi spokojný',
+                    text: '10',
                     emoji: true
                   },
                   value: '10'
@@ -137,6 +138,82 @@ app.command('/hlasovanie', async ({ command, ack, respond }) => {
               action_id: 'select_satisfaction'
             }
           ]
+        },
+        {
+          type: 'input',
+          block_id: 'fieldsOfInterest',
+          element: {
+            type: 'multi_static_select',
+            placeholder: {
+              type: 'plain_text',
+              text: 'Vyberte oblasti',
+              emoji: true
+            },
+            options: [
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '📊 Objem práce',
+                  emoji: true
+                },
+                value: 'workload'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '👥 Tímová spolupráca',
+                  emoji: true
+                },
+                value: 'teamwork'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '📋 Povaha projektu',
+                  emoji: true
+                },
+                value: 'project_nature'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '🤝 Spolupráca s klientom',
+                  emoji: true
+                },
+                value: 'client_cooperation'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '💬 Tímová komunikácia',
+                  emoji: true
+                },
+                value: 'team_communication'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '📈 Možnosť rozvoja',
+                  emoji: true
+                },
+                value: 'growth_opportunity'
+              },
+              {
+                text: {
+                  type: 'plain_text',
+                  text: '💡 Priestor na inovácie',
+                  emoji: true
+                },
+                value: 'innovation_space'
+              }
+            ],
+            action_id: 'select_fields'
+          },
+          label: {
+            type: 'plain_text',
+            text: 'Vyberte oblasti, ktoré chcete ohodnotiť:',
+            emoji: true
+          }
         },
         {
           type: 'input',
@@ -182,25 +259,36 @@ app.action('select_satisfaction', async ({ ack }) => {
   await ack();
 });
 
+// Handle fields selection
+app.action('select_fields', async ({ ack }) => {
+  await ack();
+});
+
 // Handle feedback input
 app.action('feedback_input', async ({ ack }) => {
   await ack();
 });
 
 // Handle form submission
-app.action('submit_voting', async ({ ack, body, client, view }) => {
+app.action('submit_voting', async ({ ack, body, client }) => {
   await ack();
 
   try {
-    // Get values from state instead of blocks
+    // Get values from state
     const satisfaction = body.state.values.satisfaction_scale.select_satisfaction.selected_option.value;
+    const selectedFields = body.state.values.fieldsOfInterest.select_fields.selected_options.map(option => option.text.text);
     const feedback = body.state.values.additional_feedback.feedback_input.value;
+
+    // Format selected fields for display
+    const fieldsText = selectedFields.length > 0
+      ? '\nVybrané oblasti: ' + selectedFields.join(', ')
+      : '\nŽiadne vybrané oblasti';
 
     // Send confirmation message
     await client.chat.postEphemeral({
       channel: body.channel.id,
       user: body.user.id,
-      text: `Ďakujeme za vaše hodnotenie!\nSpokojnosť: ${satisfaction}/10\nSpätná väzba: ${feedback}`
+      text: `Ďakujeme za vaše hodnotenie!\nSpokojnosť: ${satisfaction}/10${fieldsText}\nSpätná väzba: ${feedback}`
     });
 
   } catch (error) {
