@@ -48,96 +48,30 @@ app.command("/pnps-create", async ({ command, ack, respond }) => {
                     },
                 },
                 {
-                    type: "actions",
-                    block_id: "satisfaction_scale",
-                    elements: [
-                        {
-                            type: "radio_buttons",
-                            options: [
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "1",
-                                        emoji: true,
-                                    },
-                                    value: "1",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "2",
-                                        emoji: true,
-                                    },
-                                    value: "2",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "3",
-                                        emoji: true,
-                                    },
-                                    value: "3",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "4",
-                                        emoji: true,
-                                    },
-                                    value: "4",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "5",
-                                        emoji: true,
-                                    },
-                                    value: "5",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "6",
-                                        emoji: true,
-                                    },
-                                    value: "6",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "7",
-                                        emoji: true,
-                                    },
-                                    value: "7",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "8",
-                                        emoji: true,
-                                    },
-                                    value: "8",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "9",
-                                        emoji: true,
-                                    },
-                                    value: "9",
-                                },
-                                {
-                                    text: {
-                                        type: "plain_text",
-                                        text: "10",
-                                        emoji: true,
-                                    },
-                                    value: "10",
-                                },
-                            ],
-                            action_id: "select_satisfaction",
-                        },
-                    ],
+                  type: 'input',
+                  block_id: 'satisfaction_scale',
+                  label: {
+                    type: 'plain_text',
+                    text: 'Spokojnosť (1-10):', // Or 0-10, as you prefer
+                    emoji: true
+                  },
+                  element: {
+                    type: 'static_select',
+                    action_id: 'select_satisfaction',
+                    placeholder: {
+                      type: 'plain_text',
+                      text: 'Vyberte hodnotu',
+                      emoji: true
+                    },
+                    options: Array.from({ length: 10 }, (_, i) => ({ // Options 1-10
+                      text: {
+                        type: 'plain_text',
+                        text: (i + 1).toString(), // +1 to start from 1
+                        emoji: true
+                      },
+                      value: (i + 1).toString()
+                    }))
+                  }
                 },
                 {
                     type: "input",
