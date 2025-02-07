@@ -1,4 +1,7 @@
 const { App } = require("@slack/bolt");
+const { drizzle } = require("drizzle-orm/node-postgres");
+
+const db = drizzle("postgres://postgres:mypassword@localhost:5432/postgres");
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -11,4 +14,10 @@ const app = new App({
     await app.start(process.env.PORT || 3000);
 
     app.logger.info("⚡️ Bolt app is running!");
+    app.logger.info(process.env.DATABASE_URL);
+    app.logger.info(process.env.ABCD);
+
+    await db.execute("select 1");
+
+    app.logger.info("🐘 Drizzle is connected!");
 })();

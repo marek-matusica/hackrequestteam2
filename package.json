@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --env-file=.env app.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@slack/bolt": "^4.2.0"
+    "@slack/bolt": "^4.2.0",
+    "drizzle-orm": "^0.39.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.30.4"
   }
 }
