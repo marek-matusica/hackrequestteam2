@@ -215,7 +215,7 @@ app.command("/pnps-create", async ({ command, ack, respond }) => {
                 },
                 label: {
                     type: "plain_text",
-                    text: "Vyberte oblasti, ktoré chcete ohodnotiť:",
+                    text: "Vyberte oblasti, ktoré chcete by ste chceli zlepšiť:",
                     emoji: true,
                 },
             },
@@ -452,7 +452,7 @@ app.action("create_new_vote", async ({ ack, body, client }) => {
                 },
                 label: {
                     type: "plain_text",
-                    text: "Vyberte oblasti, ktoré chcete ohodnotiť:",
+                    text: "Vyberte oblasti, ktoré by ste chceli zlepšiť:",
                     emoji: true,
                 },
             },
