@@ -1,6 +1,7 @@
 const { App } = require("@slack/bolt");
 const { db } = require("./src/db/db");
 const { votes, points } = require("./src/db/schema");
+const { and, eq, gte, lte, sql } = require("drizzle-orm");
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -276,6 +277,196 @@ app.command("/pnps-reset", async ({ command, ack, respond }) => {
         console.error("Error resetting points:", error);
         await respond({
             text: "❌ Nastala chyba pri resetovaní bodov. Skúste to prosím znova.",
+            response_type: "ephemeral",
+        });
+    }
+});
+
+// Handle /pnps-results command
+app.command("/pnps-results", async ({ command, ack, respond }) => {
+    await ack();
+
+    try {
+        // Get channel info to use as project name
+        const channelInfo = await app.client.conversations.info({
+            channel: command.channel_id,
+        });
+
+        const projectName = channelInfo.channel?.name || "Neznámy projekt";
+
+        // Calculate current month's date range
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        // Query votes for current month and project
+        const monthlyVotes = await db.select().from(votes);
+        // .where(
+        //     and(
+        //         eq(votes.project, projectName),
+        //         gte(votes.createdAt, startOfMonth),
+        //         lte(votes.createdAt, endOfMonth)
+        //     )
+        // );
+
+        if (monthlyVotes.length === 0) {
+            await respond({
+                text: `Žiadne hodnotenia pre projekt ${projectName} v tomto mesiaci neboli nájdené.`,
+                response_type: "in_channel",
+            });
+            return;
+        }
+
+        // Calculate average satisfaction
+        const avgSatisfaction = (
+            monthlyVotes.reduce(
+                (sum, vote) => sum + Number(vote.satisfaction),
+                0
+            ) / monthlyVotes.length
+        ).toFixed(1);
+
+        // Prepare results message
+        const blocks = [
+            {
+                type: "header",
+                text: {
+                    type: "plain_text",
+                    text: `📊 Výsledky hodnotení: ${projectName}`,
+                    emoji: true,
+                },
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: `*Obdobie:* ${startOfMonth.toLocaleDateString(
+                        "sk-SK"
+                    )} - ${endOfMonth.toLocaleDateString(
+                        "sk-SK"
+                    )}\n*Počet hodnotení:* ${
+                        monthlyVotes.length
+                    }\n*Priemerná spokojnosť:* ${avgSatisfaction}/10`,
+                },
+            },
+            {
+                type: "divider",
+            },
+        ];
+
+        // Add individual votes
+        monthlyVotes.forEach((vote, index) => {
+            blocks.push({
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text:
+                        `*Hodnotenie #${index + 1}*\n` +
+                        `• Spokojnosť: ${vote.satisfaction}/10\n` +
+                        `• Oblasti: ${vote.fieldsOfInterest.join(", ")}\n` +
+                        `• Feedback: ${
+                            vote.additionalFeedback || "Bez komentára"
+                        }\n` +
+                        `• Dátum: ${vote.createdAt.toLocaleDateString(
+                            "sk-SK"
+                        )}`,
+                },
+            });
+            blocks.push({
+                type: "divider",
+            });
+        });
+
+        await respond({
+            blocks: blocks,
+            response_type: "in_channel",
+        });
+    } catch (error) {
+        console.error("Error fetching results:", error);
+        await respond({
+            text: "❌ Nastala chyba pri získavaní výsledkov. Skúste to prosím znova.",
+            response_type: "ephemeral",
+        });
+    }
+});
+
+// Handle /pnps-top-users command
+app.command("/pnps-top-users", async ({ command, ack, respond, client }) => {
+    await ack();
+
+    try {
+        // Get channel info to use as project name
+        const channelInfo = await app.client.conversations.info({
+            channel: command.channel_id,
+        });
+
+        const projectName = channelInfo.channel?.name || "Neznámy projekt";
+
+        // Query top 3 users by points for the project
+        const topUsers = await db
+            .select({
+                userId: points.userId,
+                totalPoints: sql`sum(${points.points})`.as("total_points"),
+            })
+            .from(points)
+            .where(eq(points.project, projectName))
+            .groupBy(points.userId)
+            .orderBy(sql`total_points desc`)
+            .limit(3);
+
+        if (topUsers.length === 0) {
+            await respond({
+                text: `Žiadne body neboli zatiaľ pridelené v projekte ${projectName}.`,
+                response_type: "in_channel",
+            });
+            return;
+        }
+
+        // Get user info for each top user
+        const userInfoPromises = topUsers.map((user) =>
+            client.users.info({ user: user.userId })
+        );
+        const userInfos = await Promise.all(userInfoPromises);
+
+        // Prepare medals
+        const medals = ["🥇", "🥈", "🥉"];
+
+        // Format message blocks
+        const blocks = [
+            {
+                type: "header",
+                text: {
+                    type: "plain_text",
+                    text: `👑 Top používatelia: ${projectName}`,
+                    emoji: true,
+                },
+            },
+            {
+                type: "divider",
+            },
+        ];
+
+        // Add user entries
+        topUsers.forEach((user, index) => {
+            const userInfo = userInfos[index].user;
+            blocks.push({
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: `${medals[index]} *${index + 1}. miesto*: <@${
+                        user.userId
+                    }> (${userInfo.real_name})\n💎 Body: ${user.totalPoints}`,
+                },
+            });
+        });
+
+        await respond({
+            blocks: blocks,
+            response_type: "in_channel",
+        });
+    } catch (error) {
+        console.error("Error fetching top users:", error);
+        await respond({
+            text: "❌ Nastala chyba pri získavaní rebríčka používateľov. Skúste to prosím znova.",
             response_type: "ephemeral",
         });
     }
