@@ -18,6 +18,14 @@ const votes = pgTable("votes", {
     validTo: timestamp("valid_to"),
 });
 
+const points = pgTable("points", {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id").notNull(),
+    project: varchar("project").notNull(),
+    points: integer("points"),
+});
+
 module.exports = {
     votes,
+    points,
 };
