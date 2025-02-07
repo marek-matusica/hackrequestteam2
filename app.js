@@ -1,7 +1,5 @@
 const { App } = require("@slack/bolt");
-const { drizzle } = require("drizzle-orm/node-postgres");
-
-const db = drizzle("postgres://postgres:mypassword@localhost:5432/postgres");
+const { db } = require("./src/db/db");
 
 // Initializes your app with your bot token and signing secret
 const app = new App({

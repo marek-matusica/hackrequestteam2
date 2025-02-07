@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --env-file=.env app.js",
-    "run:db": "docker compose -f docker-compose.yml up"
+    "run:db": "docker compose -f docker-compose.yml up",
+    "seed": "node --env-file=.env src/db/seed.js"
   },
   "author": "",
   "license": "ISC",
@@ -13,7 +14,8 @@
   "dependencies": {
     "@slack/bolt": "^4.2.0",
     "drizzle-orm": "^0.39.2",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
