@@ -18,7 +18,7 @@ app.message("hello", async ({ message, say }) => {
 });
 
 // Handle /hlasovanie command
-app.command("/pnps", async ({ command, ack, respond }) => {
+app.command("/pnps-create", async ({ command, ack, respond }) => {
     await ack();
 
     // Get channel info to use as project name
@@ -254,7 +254,7 @@ app.command("/pnps", async ({ command, ack, respond }) => {
 });
 
 // Handle /reset-points command
-app.command("/pnps reset-points", async ({ command, ack, respond }) => {
+app.command("/pnps-reset", async ({ command, ack, respond }) => {
     await ack();
 
     try {
