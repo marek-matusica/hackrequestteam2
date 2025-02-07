@@ -18,7 +18,7 @@ app.message("hello", async ({ message, say }) => {
 });
 
 // Handle /hlasovanie command
-app.command("/hlasovanie", async ({ command, ack, respond }) => {
+app.command("/pnps", async ({ command, ack, respond }) => {
     await ack();
 
     // Get channel info to use as project name
