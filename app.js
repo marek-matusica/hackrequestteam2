@@ -494,6 +494,30 @@ app.action("submit_voting", async ({ ack, body, client }) => {
     try {
         const userId = body.user.id;
         const project = body?.channel?.name;
+
+        // Calculate current month's date range
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        // Check for existing vote this month
+        const existingVote = await db
+            .select()
+            .from(votes)
+            .where(
+                and(
+                    eq(votes.userId, userId),
+                    eq(votes.project, project),
+                    gte(votes.createdAt, startOfMonth),
+                    lte(votes.createdAt, endOfMonth)
+                )
+            )
+            .limit(1);
+
+        if (existingVote.length > 0) {
+            throw new Error("Už ste v tomto mesiaci hlasovali.");
+        }
+
         const satisfactionScale =
             body.state.values.satisfaction_scale.select_satisfaction
                 .selected_option.value;
@@ -530,7 +554,7 @@ app.action("submit_voting", async ({ ack, body, client }) => {
         await client.chat.postEphemeral({
             channel: body.channel.id,
             user: body.user.id,
-            text: "Prepáčte, nastala chyba pri spracovaní vášho hodnotenia. Skúste to prosím znova.",
+            text: `Prepáčte, nastala chyba pri spracovaní vášho hodnotenia: ${error.message}`,
         });
     }
 });
