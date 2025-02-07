@@ -300,14 +300,16 @@ app.command("/pnps-results", async ({ command, ack, respond }) => {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
         // Query votes for current month and project
-        const monthlyVotes = await db.select().from(votes);
-        // .where(
-        //     and(
-        //         eq(votes.project, projectName),
-        //         gte(votes.createdAt, startOfMonth),
-        //         lte(votes.createdAt, endOfMonth)
-        //     )
-        // );
+        const monthlyVotes = await db
+            .select()
+            .from(votes)
+            .where(
+                and(
+                    eq(votes.project, projectName),
+                    gte(votes.createdAt, startOfMonth),
+                    lte(votes.createdAt, endOfMonth)
+                )
+            );
 
         if (monthlyVotes.length === 0) {
             await respond({
