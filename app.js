@@ -1,6 +1,6 @@
 const { App } = require("@slack/bolt");
 const { db } = require("./src/db/db");
-const { votes } = require("./src/db/schema");
+const { votes, points } = require("./src/db/schema");
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -250,6 +250,34 @@ app.command("/pnps", async ({ command, ack, respond }) => {
         });
     } catch (error) {
         console.error("Error sending message:", error);
+    }
+});
+
+// Handle /reset-points command
+app.command("/pnps reset-points", async ({ command, ack, respond }) => {
+    await ack();
+
+    try {
+        // Get channel info to use as project name
+        const channelInfo = await app.client.conversations.info({
+            channel: command.channel_id,
+        });
+
+        const projectName = channelInfo.channel?.name || "Neznámy projekt";
+
+        // Reset points for the current project
+        await db.delete(points).where(points.project.eq(projectName));
+
+        await respond({
+            text: `✅ Body pre projekt ${projectName} boli úspešne resetované.`,
+            response_type: "in_channel",
+        });
+    } catch (error) {
+        console.error("Error resetting points:", error);
+        await respond({
+            text: "❌ Nastala chyba pri resetovaní bodov. Skúste to prosím znova.",
+            response_type: "ephemeral",
+        });
     }
 });
 
