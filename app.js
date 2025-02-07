@@ -267,7 +267,7 @@ app.command("/pnps-reset", async ({ command, ack, respond }) => {
         const projectName = channelInfo.channel?.name || "Neznámy projekt";
 
         // Reset points for the current project
-        await db.delete(points).where(points.project.eq(projectName));
+        await db.delete(points).where(eq(points.project, projectName));
 
         await respond({
             text: `✅ Body pre projekt ${projectName} boli úspešne resetované.`,
@@ -487,6 +487,49 @@ app.action("feedback_input", async ({ ack }) => {
     await ack();
 });
 
+// Helper function to get voting streak
+async function getVotingStreak(userId, project, currentDate) {
+    let streak = 1;
+    let checkDate = new Date(currentDate);
+
+    while (true) {
+        // Move to previous month
+        checkDate.setMonth(checkDate.getMonth() - 1);
+        const startOfMonth = new Date(
+            checkDate.getFullYear(),
+            checkDate.getMonth(),
+            1
+        );
+        const endOfMonth = new Date(
+            checkDate.getFullYear(),
+            checkDate.getMonth() + 1,
+            0
+        );
+
+        // Check if there was a vote in this month
+        const vote = await db
+            .select()
+            .from(votes)
+            .where(
+                and(
+                    eq(votes.userId, userId),
+                    eq(votes.project, project),
+                    gte(votes.createdAt, startOfMonth),
+                    lte(votes.createdAt, endOfMonth)
+                )
+            )
+            .limit(1);
+
+        if (vote.length === 0) {
+            break;
+        }
+
+        streak++;
+    }
+
+    return streak;
+}
+
 // Handle form submission
 app.action("submit_voting", async ({ ack, body, client }) => {
     await ack();
@@ -528,6 +571,7 @@ app.action("submit_voting", async ({ ack, body, client }) => {
         const additionalFeedback =
             body.state.values.additional_feedback.feedback_input.value;
 
+        // Save the vote
         await db.insert(votes).values({
             userId,
             project,
@@ -536,21 +580,33 @@ app.action("submit_voting", async ({ ack, body, client }) => {
             additionalFeedback,
         });
 
+        // Calculate streak and points
+        const streak = await getVotingStreak(userId, project, now);
+        const basePoints = 100;
+        const coefficient = 1 + 0.1 * (streak - 1);
+        const points_earned = Math.round(basePoints * coefficient);
+
+        // Add points to the user
+        await db.insert(points).values({
+            userId,
+            project,
+            points: points_earned,
+        });
+
         // Format selected fields for display
         const fieldsText =
             fieldsOfInterest.length > 0
                 ? "\nVybrané oblasti: " + fieldsOfInterest.join(", ")
                 : "\nŽiadne vybrané oblasti";
 
-        // Send confirmation message
+        // Send confirmation message with points info
         await client.chat.postEphemeral({
             channel: body.channel.id,
             user: body.user.id,
-            text: `${userId}, ďakujeme za vaše hodnotenie projektu ${project}!\nSpokojnosť: ${satisfactionScale}/10${fieldsText}\nSpätná väzba: ${additionalFeedback}`,
+            text: `${userId}, ďakujeme za vaše hodnotenie projektu ${project}!\nSpokojnosť: ${satisfactionScale}/10${fieldsText}\nSpätná väzba: ${additionalFeedback}\n\n🎯 Získali ste ${points_earned} bodov! (${streak}. mesiac v rade)`,
         });
     } catch (error) {
         console.error("Error processing submission:", error);
-        // Send error message to user
         await client.chat.postEphemeral({
             channel: body.channel.id,
             user: body.user.id,
