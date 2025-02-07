@@ -17,7 +17,6 @@ app.message('hello', async ({ message, say }) => {
 });
 
 
-
 // Handle /hlasovanie command
 app.command('/hlasovanie', async ({ command, ack, respond }) => {
   await ack();
@@ -274,21 +273,22 @@ app.action('submit_voting', async ({ ack, body, client }) => {
   await ack();
 
   try {
-    // Get values from state
-    const satisfaction = body.state.values.satisfaction_scale.select_satisfaction.selected_option.value;
-    const selectedFields = body.state.values.fieldsOfInterest.select_fields.selected_options.map(option => option.text.text);
-    const feedback = body.state.values.additional_feedback.feedback_input.value;
+    const userId = body.user.id;
+    const project = body?.channel?.name;
+    const satisfactionScale = body.state.values.satisfaction_scale.select_satisfaction.selected_option.value;
+    const fieldsOfInterest = body.state.values.fieldsOfInterest.select_fields.selected_options.map(option => option.text.text);
+    const additionalFeedback = body.state.values.additional_feedback.feedback_input.value;
 
     // Format selected fields for display
-    const fieldsText = selectedFields.length > 0
-      ? '\nVybrané oblasti: ' + selectedFields.join(', ')
+    const fieldsText = fieldsOfInterest.length > 0
+      ? '\nVybrané oblasti: ' + fieldsOfInterest.join(', ')
       : '\nŽiadne vybrané oblasti';
 
     // Send confirmation message
     await client.chat.postEphemeral({
       channel: body.channel.id,
       user: body.user.id,
-      text: `Ďakujeme za vaše hodnotenie!\nSpokojnosť: ${satisfaction}/10${fieldsText}\nSpätná väzba: ${feedback}`
+      text: `${userId}, ďakujeme za vaše hodnotenie projektu ${project}!\nSpokojnosť: ${satisfactionScale}/10${fieldsText}\nSpätná väzba: ${additionalFeedback}`
     });
 
   } catch (error) {
@@ -305,12 +305,8 @@ app.action('submit_voting', async ({ ack, body, client }) => {
 (async () => {
   // Start your app
   await app.start(process.env.PORT || 3000);
-
   app.logger.info("⚡️ Bolt app is running!");
   app.logger.info(process.env.DATABASE_URL);
-  app.logger.info(process.env.ABCD);
-
   await db.execute("select 1");
-
   app.logger.info("🐘 Drizzle is connected!");
 })();
