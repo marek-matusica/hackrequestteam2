@@ -60,7 +60,7 @@ app.command("/pnps-create", async ({ command, ack, respond }) => {
                 type: "header",
                 text: {
                     type: "plain_text",
-                    text: `Hlasovanie: ${projectName}`,
+                    text: `Projekt: ${projectName}`,
                     emoji: true,
                 },
             },
@@ -110,18 +110,11 @@ app.command("/pnps-create", async ({ command, ack, respond }) => {
         // If no last vote exists, or user chose to create new, show regular form
         blocks.push(
             {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: "Aká je pravdepodobnosť, že by si kolegovi odporučil vybraný projekt? 👍🏼/👎🏼( 0 nízka - 10 vysoká )",
-                },
-            },
-            {
                 type: "input",
                 block_id: "satisfaction_scale",
                 label: {
                     type: "plain_text",
-                    text: "Spokojnosť (1-10):", // Or 0-10, as you prefer
+                    text: "Spokojnosť (1 nízka - 10 vysoká):", // Or 0-10, as you prefer
                     emoji: true,
                 },
                 element: {
@@ -215,7 +208,7 @@ app.command("/pnps-create", async ({ command, ack, respond }) => {
                 },
                 label: {
                     type: "plain_text",
-                    text: "Vyberte oblasti, ktoré chcete by ste chceli zlepšiť:",
+                    text: "Čo by si na projekte zlepšil?",
                     emoji: true,
                 },
             },
@@ -347,18 +340,11 @@ app.action("create_new_vote", async ({ ack, body, client }) => {
                 },
             },
             {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: "Aká je pravdepodobnosť, že by si kolegovi odporučil vybraný projekt? 👍🏼/👎🏼( 0 nízka - 10 vysoká )",
-                },
-            },
-            {
                 type: "input",
                 block_id: "satisfaction_scale",
                 label: {
                     type: "plain_text",
-                    text: "Spokojnosť (1-10):", // Or 0-10, as you prefer
+                    text: "\"Spokojnosť (1 nízka - 10 vysoká):", // Or 0-10, as you prefer
                     emoji: true,
                 },
                 element: {
@@ -452,7 +438,7 @@ app.action("create_new_vote", async ({ ack, body, client }) => {
                 },
                 label: {
                     type: "plain_text",
-                    text: "Vyberte oblasti, ktoré by ste chceli zlepšiť:",
+                    text: "Čo by si na projekte zlepšil?",
                     emoji: true,
                 },
             },
@@ -855,7 +841,7 @@ app.action("submit_voting", async ({ ack, body, client }) => {
         await client.chat.postEphemeral({
             channel: body.channel.id,
             user: body.user.id,
-            text: `${userId}, ďakujeme za vaše hodnotenie projektu ${project}!\nSpokojnosť: ${satisfactionScale}/10${fieldsText}\nSpätná väzba: ${additionalFeedback}\n\n🎯 Získali ste ${points_earned} bodov! (${streak}. mesiac v rade)`,
+            text: `Ďakujeme za vaše hodnotenie projektu ${project}!\nSpokojnosť: ${satisfactionScale}/10${fieldsText}\nSpätná väzba: ${additionalFeedback}\n\n🎯 Získali ste ${points_earned} bodov! (${streak}. mesiac v rade)`,
         });
     } catch (error) {
         console.error("Error processing submission:", error);
